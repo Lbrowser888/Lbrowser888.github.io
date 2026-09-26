@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Lbrowser Search</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: #202124;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            min-height: 100vh;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            color: #e8eaed;
+            transition: 0.3s;
+        }
+
+        body.light { background: #ffffff; color: #202124; }
+
+        .top-bar {
+            position: fixed; top: 15px; right: 20px;
+            display: flex; align-items: center; gap: 15px; z-index: 100;
+        }
+        .clock { font-size: 16px; color: #9aa0a6; }
+        body.light .clock { color: #5f6368; }
+
+        .top-btn {
+            background: transparent; border: none; font-size: 24px;
+            cursor: pointer; padding: 8px; border-radius: 50%;
+            transition: 0.3s; color: inherit;
+        }
+        .top-btn:hover { background: #303134; }
+        body.light .top-btn:hover { background: #f1f3f4; }
+        .settings-btn:hover { transform: rotate(90deg); }
+
+        /* === НАСТРОЙКИ === */
+        .settings-panel {
+            position: fixed; top: 60px; right: 20px;
+            background: #303134; border: 1px solid #5f6368;
+            border-radius: 12px; padding: 20px; width: 340px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            opacity: 0; visibility: hidden; transform: translateY(-10px);
+            transition: 0.3s; z-index: 100;
+            max-height: 80vh; overflow-y: auto;
+        }
+        body.light .settings-panel { background: #ffffff; border-color: #dadce0; }
+        .settings-panel.open { opacity: 1; visibility: visible; transform: translateY(0); }
+
+        .settings-panel h3 {
+            font-size: 16px; margin-bottom: 20px;
+            padding-bottom: 10px; border-bottom: 1px solid #5f6368;
+        }
+        body.light .settings-panel h3 { border-color: #dadce0; }
+
+        .setting-item { margin-bottom: 18px; }
+        .setting-item > label {
+            display: block; font-size: 13px;
+            color: #9aa0a6; margin-bottom: 8px;
+        }
+        body.light .setting-item > label { color: #5f6368; }
+
+        .setting-item select {
+            width: 100%; padding: 10px;
+            background: #202124; border: 1px solid #5f6368;
+            border-radius: 6px; color: #e8eaed;
+            font-size: 14px; cursor: pointer;
+        }
+        body.light .setting-item select {
+            background: #f8f9fa; color: #202124; border-color: #dadce0;
+        }
+
+        .setting-item input[type="range"] {
+            width: 100%; cursor: pointer; accent-color: #4285f4;
+        }
+
+        .toggle-row {
+            display: flex; align-items: center;
+            justify-content: space-between; padding: 8px 0;
+        }
+        .toggle-row span { font-size: 14px; }
+
+        .switch {
+            position: relative; display: inline-block;
+            width: 44px; height: 24px; flex-shrink: 0;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .switch .slider {
+            position: absolute; cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #5f6368;
+            transition: 0.3s; border-radius: 24px;
+        }
+        .switch .slider:before {
+            position: absolute; content: "";
+            height: 18px; width: 18px;
+            left: 3px; bottom: 3px;
+            background-color: white;
+            transition: 0.3s; border-radius: 50%;
+        }
+        .switch input:checked + .slider { background-color: #4285f4; }
+        .switch input:checked + .slider:before { transform: translateX(20px); }
+
+        .history-list {
+            max-height: 150px; overflow-y: auto;
+            border: 1px solid #5f6368;
+            border-radius: 6px; padding: 8px; margin-top: 5px;
+        }
+        body.light .history-list { border-color: #dadce0; }
+
+        .history-item {
+            display: flex; justify-content: space-between;
+            align-items: center; padding: 6px 8px;
+            font-size: 13px; border-radius: 4px;
+        }
+        .history-item:hover { background: #3c4043; }
+        body.light .history-item:hover { background: #f1f3f4; }
+        .history-item a {
+            color: #8ab4f8; text-decoration: none;
+            flex: 1; overflow: hidden; text-overflow: ellipsis;
+            white-space: nowrap; margin-right: 8px;
+        }
+        .history-item button {
+            background: transparent; border: none;
+            color: #ea4335; cursor: pointer; font-size: 16px;
+        }
+        .empty-msg {
+            font-size: 12px; color: #9aa0a6;
+            text-align: center; padding: 10px;
+        }
+
+        .reset-btn {
+            width: 100%; padding: 10px;
+            background: transparent; color: #ea4335;
+            border: 1px solid #ea4335; border-radius: 6px;
+            font-size: 14px; cursor: pointer;
+            transition: 0.3s; margin-top: 5px;
+        }
+        .reset-btn:hover { background: #ea4335; color: white; }
+        .clear-btn {
+            width: 100%; padding: 8px;
+            background: transparent; color: #fbbc05;
+            border: 1px solid #fbbc05; border-radius: 6px;
+            font-size: 13px; cursor: pointer;
+            transition: 0.3s; margin-top: 5px;
+        }
+        .clear-btn:hover { background: #fbbc05; color: #202124; }
+
+        /* === ГЛАВНЫЙ ЭКРАН === */
+        .logo {
+            font-size: 80px; font-weight: bold; margin-bottom: 10px;
+            background: linear-gradient(90deg, #4285f4, #ea4335, #fbbc05, #34a853);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .subtitle {
+            color: #9aa0a6; font-size: 14px; margin-bottom: 40px;
+        }
+        body.light .subtitle { color: #5f6368; }
+
+        .search-box {
+            display: flex; align-items: center;
+            background: #303134; border: 1px solid #5f6368;
+            border-radius: 30px; padding: 5px 5px 5px 25px;
+            width: 650px; max-width: 90%; transition: 0.3s;
+        }
+        body.light .search-box { background: #ffffff; border-color: #dadce0; }
+        .search-box:hover, .search-box:focus-within {
+            box-shadow: 0 4px 12px rgba(66,133,244,0.3);
+            border-color: #4285f4;
+        }
+        input[type="text"] {
+            flex: 1; border: none; outline: none;
+            background: transparent; font-size: 18px;
+            padding: 15px 10px; color: #e8eaed;
+        }
+        body.light input[type="text"] { color: #202124; }
+        input::placeholder { color: #9aa0a6; }
+
+        .search-btn {
+            background: transparent; border: none;
+            color: #4285f4; font-size: 22px;
+            cursor: pointer; padding: 10px 15px;
+            transition: 0.3s;
+        }
+        .search-btn:hover { transform: scale(1.2); }
+
+        .buttons { display: flex; gap: 15px; margin-top: 30px; }
+        .btn {
+            background: #303134; color: #e8eaed;
+            border: 1px solid #5f6368; border-radius: 5px;
+            padding: 12px 25px; font-size: 14px;
+            cursor: pointer; transition: 0.3s;
+        }
+        body.light .btn {
+            background: #f8f9fa; color: #202124; border-color: #dadce0;
+        }
+        .btn:hover { border-color: #8ab4f8; color: #8ab4f8; }
+
+        /* === РАСШИРЕННЫЙ РЕЖИМ === */
+        .advanced-toggle {
+            margin-top: 20px;
+            color: #8ab4f8;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 10px 20px;
+            border-radius: 20px;
+            transition: 0.3s;
+            background: transparent;
+            border: 1px solid #5f6368;
+        }
+        body.light .advanced-toggle { border-color: #dadce0; }
+        .advanced-toggle:hover { background: #303134; }
+        body.light .advanced-toggle:hover { background: #f1f3f4; }
+
+        .advanced-panel {
+            margin-top: 20px;
+            background: #303134;
+            border: 1px solid #5f6368;
+            border-radius: 12px;
+            padding: 20px;
+            width: 650px;
+            max-width: 90%;
+            display: none;
+        }
+        body.light .advanced-panel { background: #ffffff; border-color: #dadce0; }
+        .advanced-panel.open { display: block; animation: slideIn 0.3s ease; }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .advanced-panel h3 {
+            font-size: 16px;
+            margin-bottom: 10px;
+            color: #e8eaed;
+        }
+        body.light .advanced-panel h3 { color: #202124; }
+
+        /* === ОПИСАНИЕ РАСШИРЕННОГО РЕЖИМА === */
+        .advanced-description {
+            background: #202124;
+            border-left: 3px solid #4285f4;
+            border-radius: 6px;
+            padding: 12px 16px;
+            margin-bottom: 15px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #bdc1c6;
+        }
+        body.light .advanced-description {
+            background: #f8f9fa; color: #5f6368;
+        }
+        .advanced-description b {
+            color: #8ab4f8;
+        }
+        body.light .advanced-description b { color: #1a73e8; }
+
+        .advanced-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .advanced-row select {
+            padding: 12px;
+            background: #202124;
+            border: 1px solid #5f6368;
+            border-radius: 8px;
+            color: #e8eaed;
+            font-size: 14px;
+            cursor: pointer;
+            min-width: 160px;
+        }
+        body.light .advanced-row select {
+            background: #f8f9fa; color: #202124; border-color: #dadce0;
+        }
+
+        .advanced-row input {
+            flex: 1;
+            padding: 12px 15px;
+            background: #202124;
+            border: 1px solid #5f6368;
+            border-radius: 8px;
+            color: #e8eaed;
+            font-size: 14px;
+            outline: none;
+        }
+        body.light .advanced-row input {
+            background: #f8f9fa; color: #202124; border-color: #dadce0;
+        }
+        .advanced-row input:focus { border-color: #4285f4; }
+
+        .advanced-row button {
+            padding: 12px 25px;
+            background: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .advanced-row button:hover { background: #1a73e8; }
+
+        .advanced-hint {
+            font-size: 12px;
+            color: #9aa0a6;
+            margin-top: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-bar">
+        <div class="clock" id="clock"></div>
+        <button class="top-btn settings-btn" onclick="toggleSettings(event)">⚙️</button>
+        <button class="top-btn" onclick="toggleHistory(event)" title="История поиска">🕐</button>
+    </div>
+
+    <div class="settings-panel" id="settingsPanel" onclick="event.stopPropagation()">
+        <h3>⚙️ Настройки</h3>
+
+        <div class="setting-item">
+            <label>Поисковик по умолчанию</label>
+            <select id="searchEngine" onchange="saveSettings()">
+                <option value="google" selected>Google</option>
+                <option value="yandex">Яндекс</option>
+                <option value="bing">Bing</option>
+                <option value="duckduckgo">DuckDuckGo</option>
+            </select>
+        </div>
+
+        <div class="setting-item">
+            <label>Размер шрифта: <span id="fontSizeLabel">18</span>px</label>
+            <input type="range" id="fontSize" min="12" max="28" value="18" oninput="changeFontSize(this.value)">
+        </div>
+
+        <div class="toggle-row">
+            <span>Светлая тема</span>
+            <label class="switch">
+                <input type="checkbox" id="themeToggle" onchange="toggleTheme()">
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <div class="toggle-row">
+            <span>Показывать часы</span>
+            <label class="switch">
+                <input type="checkbox" id="clockToggle" checked onchange="toggleClock()">
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <div class="setting-item" style="margin-top: 15px;">
+            <label>🕐 История поиска</label>
+            <div class="history-list" id="historyList">
+                <div class="empty-msg">Пусто</div>
+            </div>
+            <button class="clear-btn" onclick="clearHistory()">Очистить историю</button>
+        </div>
+
+        <button class="reset-btn" onclick="resetSettings()">Сбросить настройки</button>
+    </div>
+
+    <div class="logo">Lbrowser Search</div>
+    <div class="subtitle">Поиск, который принадлежит тебе</div>
+
+    <div class="search-box">
+        <input type="text" id="query" placeholder="Введите запрос..." autofocus>
+        <button class="search-btn" onclick="search()">🔍</button>
+    </div>
+
+    <div class="buttons">
+        <button class="btn" onclick="search()">Найти</button>
+        <button class="btn" onclick="lucky()">Мне повезёт!</button>
+    </div>
+
+    <button class="advanced-toggle" onclick="toggleAdvanced()">⚡ Расширенный режим</button>
+
+    <div class="advanced-panel" id="advancedPanel">
+        <h3>⚡ Расширенный режим</h3>
+
+        <div class="advanced-description">
+            <b>Что такое расширенный режим?</b><br>
+            Расширенный режим — это специальный поиск, который ищет <b>только по Википедии</b>.
+            Здесь вы можете выбрать язык и точную тему для поиска.
+            Это удобно, когда нужно найти <b>точную информацию</b>, а не миллион сайтов.
+        </div>
+
+        <div class="advanced-row">
+            <select id="advancedEngine">
+                <option value="ru">🇷🇺 Русская Википедия</option>
+                <option value="en">🇬🇧 English Wikipedia</option>
+            </select>
+            <input type="text" id="advancedQuery" placeholder="Введите запрос для поиска в Википедии...">
+            <button onclick="advancedSearch()">Искать</button>
+        </div>
+        <div class="advanced-hint">Поиск откроется в новом окне</div>
+    </div>
+
+    <script>
+        function toggleSettings(event) {
+            if (event) event.stopPropagation();
+            document.getElementById('settingsPanel').classList.toggle('open');
+        }
+
+        function toggleHistory(event) {
+            if (event) event.stopPropagation();
+            var panel = document.getElementById('settingsPanel');
+            panel.classList.add('open');
+            setTimeout(() => {
+                document.getElementById('historyList').scrollIntoView({behavior: 'smooth', block: 'center'});
+            }, 150);
+        }
+
+        function toggleAdvanced() {
+            document.getElementById('advancedPanel').classList.toggle('open');
+        }
+
+        function saveSettings() {
+            var settings = {
+                engine: document.getElementById('searchEngine').value,
+                fontSize: document.getElementById('fontSize').value,
+                lightTheme: document.getElementById('themeToggle').checked,
+                showClock: document.getElementById('clockToggle').checked
+            };
+            localStorage.setItem('lbrowserSettings', JSON.stringify(settings));
+        }
+
+        function loadSettings() {
+            var saved = localStorage.getItem('lbrowserSettings');
+            if (saved) {
+                var s = JSON.parse(saved);
+                document.getElementById('searchEngine').value = s.engine || 'google';
+                document.getElementById('fontSize').value = s.fontSize || 18;
+                document.getElementById('fontSizeLabel').textContent = s.fontSize || 18;
+                document.getElementById('query').style.fontSize = (s.fontSize || 18) + 'px';
+                if (s.lightTheme) {
+                    document.body.classList.add('light');
+                    document.getElementById('themeToggle').checked = true;
+                }
+                if (s.showClock === false) {
+                    document.getElementById('clock').style.display = 'none';
+                    document.getElementById('clockToggle').checked = false;
+                }
+            }
+            loadHistory();
+        }
+
+        function changeFontSize(size) {
+            document.getElementById('query').style.fontSize = size + 'px';
+            document.getElementById('fontSizeLabel').textContent = size;
+            saveSettings();
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('light');
+            saveSettings();
+        }
+
+        function toggleClock() {
+            var clock = document.getElementById('clock');
+            clock.style.display = clock.style.display === 'none' ? 'block' : 'none';
+            saveSettings();
+        }
+
+        function resetSettings() {
+            if (confirm('Сбросить все настройки?')) {
+                localStorage.removeItem('lbrowserSettings');
+                location.reload();
+            }
+        }
+
+        function addHistory(query) {
+            var history = JSON.parse(localStorage.getItem('lbrowserHistory') || '[]');
+            history = history.filter(h => h.query !== query);
+            history.unshift({ query: query, time: new Date().toLocaleString('ru-RU') });
+            if (history.length > 20) history = history.slice(0, 20);
+            localStorage.setItem('lbrowserHistory', JSON.stringify(history));
+            loadHistory();
+        }
+
+        function loadHistory() {
+            var list = document.getElementById('historyList');
+            if (!list) return;
+            var history = JSON.parse(localStorage.getItem('lbrowserHistory') || '[]');
+            if (history.length === 0) {
+                list.innerHTML = '<div class="empty-msg">Пусто</div>';
+                return;
+            }
+            list.innerHTML = history.map((h, i) => `
+                <div class="history-item">
+                    <a href="#" onclick="searchFromHistory('${h.query.replace(/'/g, "\\'")}'); return false;" title="${h.time}">
+                        🔍 ${h.query}
+                    </a>
+                    <button onclick="removeHistory(${i})">✕</button>
+                </div>
+            `).join('');
+        }
+
+        function searchFromHistory(query) {
+            document.getElementById('query').value = query;
+            search();
+        }
+
+        function removeHistory(index) {
+            var history = JSON.parse(localStorage.getItem('lbrowserHistory') || '[]');
+            history.splice(index, 1);
+            localStorage.setItem('lbrowserHistory', JSON.stringify(history));
+            loadHistory();
+        }
+
+        function clearHistory() {
+            if (confirm('Очистить всю историю поиска?')) {
+                localStorage.removeItem('lbrowserHistory');
+                loadHistory();
+            }
+        }
+
+        function getEngineUrl(engine) {
+            var urls = {
+                google: 'https://www.google.com/search?q=',
+                yandex: 'https://yandex.ru/search/?text=',
+                bing: 'https://www.bing.com/search?q=',
+                duckduckgo: 'https://duckduckgo.com/?q='
+            };
+            return urls[engine] || urls.google;
+        }
+
+        function search() {
+            var q = document.getElementById('query').value.trim();
+            if (q === '') { document.getElementById('query').focus(); return; }
+            addHistory(q);
+            var engine = document.getElementById('searchEngine').value;
+            window.location.href = getEngineUrl(engine) + encodeURIComponent(q);
+        }
+
+        function lucky() {
+            var q = document.getElementById('query').value.trim();
+            if (q === '') return;
+            addHistory(q);
+            window.location.href = 'https://www.google.com/search?q=' + encodeURIComponent(q) + '&btnI=1';
+        }
+
+        /* === РАСШИРЕННЫЙ ПОИСК — ВИКИПЕДИЯ === */
+        function advancedSearch() {
+            var q = document.getElementById('advancedQuery').value.trim();
+            if (q === '') { document.getElementById('advancedQuery').focus(); return; }
+            addHistory(q);
+            var lang = document.getElementById('advancedEngine').value;
+            var wikiUrl = 'https://' + lang + '.wikipedia.org/w/index.php?search=' + encodeURIComponent(q);
+            window.open(wikiUrl, '_blank');
+        }
+
+        document.getElementById('query').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') search();
+        });
+
+        document.getElementById('advancedQuery').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') advancedSearch();
+        });
+
+        function updateClock() {
+            var now = new Date();
+            document.getElementById('clock').textContent =
+                String(now.getHours()).padStart(2, '0') + ':' +
+                String(now.getMinutes()).padStart(2, '0');
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        document.addEventListener('click', function(e) {
+            var panel = document.getElementById('settingsPanel');
+            var btn = document.querySelector('.settings-btn');
+            if (panel.classList.contains('open') &&
+                !panel.contains(e.target) &&
+                !btn.contains(e.target) &&
+                !e.target.classList.contains('top-btn')) {
+                panel.classList.remove('open');
+            }
+        });
+
+        loadSettings();
+    </script>
+</body>
+</html>

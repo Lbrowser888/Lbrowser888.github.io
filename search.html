@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Lbrowser Search</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: #202124;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #e8eaed;
+        }
+
+        .logo {
+            font-size: 90px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            background: linear-gradient(90deg, #4285f4, #ea4335, #fbbc05, #34a853);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-align: center;
+        }
+
+        .subtitle {
+            color: #9aa0a6;
+            font-size: 18px;
+            margin-bottom: 50px;
+            text-align: center;
+        }
+
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: #303134;
+            border: 1px solid #5f6368;
+            border-radius: 30px;
+            padding: 5px 5px 5px 25px;
+            width: 650px;
+            max-width: 90%;
+            transition: 0.3s;
+            box-shadow: 0 1px 6px rgba(0,0,0,0.3);
+        }
+
+        .search-box:hover, .search-box:focus-within {
+            background: #3c4043;
+            box-shadow: 0 4px 12px rgba(66,133,244,0.3);
+            border-color: #4285f4;
+        }
+
+        input {
+            flex: 1;
+            border: none;
+            outline: none;
+            background: transparent;
+            font-size: 18px;
+            padding: 15px 10px;
+            color: #e8eaed;
+        }
+
+        input::placeholder { color: #9aa0a6; }
+
+        .search-btn {
+            background: transparent;
+            border: none;
+            color: #4285f4;
+            font-size: 22px;
+            cursor: pointer;
+            padding: 10px 15px;
+            transition: 0.3s;
+        }
+
+        .search-btn:hover { transform: scale(1.2); }
+
+        .buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            background: #303134;
+            color: #e8eaed;
+            border: 1px solid #5f6368;
+            border-radius: 5px;
+            padding: 12px 25px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn:hover {
+            border-color: #8ab4f8;
+            color: #8ab4f8;
+        }
+
+        .links {
+            position: fixed;
+            bottom: 30px;
+            display: flex;
+            gap: 25px;
+            font-size: 14px;
+        }
+
+        .links a {
+            color: #9aa0a6;
+            text-decoration: none;
+            transition: 0.3s;
+            padding: 8px 15px;
+            border-radius: 20px;
+        }
+
+        .links a:hover {
+            color: #e8eaed;
+            background: #303134;
+        }
+
+        .footer {
+            position: fixed;
+            bottom: 10px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 12px;
+            color: #5f6368;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="logo">Lbrowser Search</div>
+    <div class="subtitle">Поиск, который принадлежит тебе</div>
+
+    <div class="search-box">
+        <input type="text" id="query" placeholder="Введите запрос..." autofocus>
+        <button class="search-btn" onclick="search()">🔍</button>
+    </div>
+
+    <div class="buttons">
+        <button class="btn" onclick="search()">Найти</button>
+        <button class="btn" onclick="lucky()">Мне повезёт!</button>
+    </div>
+
+    <div class="links">
+        <a href="https://ru.wikipedia.org">📚 Википедия</a>
+        <a href="https://youtube.com">📺 YouTube</a>
+        <a href="https://github.com">💻 GitHub</a>
+    </div>
+
+    <div class="footer">
+        © 2026 Lbrowser Search — твой поисковик
+    </div>
+
+    <script>
+        function search() {
+            var q = document.getElementById('query').value.trim();
+            if (q === '') {
+                document.getElementById('query').focus();
+                return;
+            }
+            window.location.href = 'https://ru.wikipedia.org/wiki/' + encodeURIComponent(q);
+        }
+
+        function lucky() {
+            var q = document.getElementById('query').value.trim();
+            if (q === '') return;
+            window.location.href = 'https://ru.wikipedia.org/wiki/Special:Random';
+        }
+
+        document.getElementById('query').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') search();
+        });
+    </script>
+</body>
+</html>
