@@ -2,179 +2,247 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Lbrowser Search</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lbrowser Search — Результаты</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
         body {
             background: #202124;
             font-family: 'Segoe UI', Arial, sans-serif;
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
             color: #e8eaed;
+            padding: 15px;
         }
 
+        body.light { background: #ffffff; color: #202124; }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #5f6368;
+            flex-wrap: wrap;
+        }
+        body.light .header { border-color: #dadce0; }
+
         .logo {
-            font-size: 90px;
+            font-size: 24px;
             font-weight: bold;
-            margin-bottom: 15px;
             background: linear-gradient(90deg, #4285f4, #ea4335, #fbbc05, #34a853);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            text-align: center;
         }
 
-        .subtitle {
-            color: #9aa0a6;
-            font-size: 18px;
-            margin-bottom: 50px;
-            text-align: center;
-        }
-
-        .search-box {
+        .search-form {
+            flex: 1;
             display: flex;
-            align-items: center;
             background: #303134;
             border: 1px solid #5f6368;
-            border-radius: 30px;
-            padding: 5px 5px 5px 25px;
-            width: 650px;
-            max-width: 90%;
-            transition: 0.3s;
-            box-shadow: 0 1px 6px rgba(0,0,0,0.3);
+            border-radius: 22px;
+            padding: 3px 3px 3px 15px;
+            min-width: 200px;
         }
+        body.light .search-form { background: #ffffff; border-color: #dadce0; }
 
-        .search-box:hover, .search-box:focus-within {
-            background: #3c4043;
-            box-shadow: 0 4px 12px rgba(66,133,244,0.3);
-            border-color: #4285f4;
-        }
-
-        input {
+        .search-form input {
             flex: 1;
             border: none;
             outline: none;
             background: transparent;
-            font-size: 18px;
-            padding: 15px 10px;
             color: #e8eaed;
+            font-size: 14px;
+            padding: 10px;
+            min-width: 0;
         }
+        body.light .search-form input { color: #202124; }
 
-        input::placeholder { color: #9aa0a6; }
-
-        .search-btn {
-            background: transparent;
+        .search-form button {
+            background: #4285f4;
+            color: white;
             border: none;
-            color: #4285f4;
-            font-size: 22px;
+            border-radius: 18px;
+            padding: 8px 18px;
+            font-size: 13px;
             cursor: pointer;
-            padding: 10px 15px;
-            transition: 0.3s;
         }
+        .search-form button:active { background: #1a73e8; }
 
-        .search-btn:hover { transform: scale(1.2); }
-
-        .buttons {
-            display: flex;
-            gap: 15px;
-            margin-top: 30px;
-        }
-
-        .btn {
-            background: #303134;
-            color: #e8eaed;
-            border: 1px solid #5f6368;
-            border-radius: 5px;
-            padding: 12px 25px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        .btn:hover {
-            border-color: #8ab4f8;
+        .back-btn {
             color: #8ab4f8;
-        }
-
-        .links {
-            position: fixed;
-            bottom: 30px;
-            display: flex;
-            gap: 25px;
-            font-size: 14px;
-        }
-
-        .links a {
-            color: #9aa0a6;
             text-decoration: none;
-            transition: 0.3s;
-            padding: 8px 15px;
-            border-radius: 20px;
+            font-size: 13px;
+            padding: 8px 12px;
+            border-radius: 18px;
+        }
+        .back-btn:active { background: #303134; }
+
+        .results-info {
+            color: #9aa0a6;
+            font-size: 13px;
+            margin-bottom: 15px;
         }
 
-        .links a:hover {
-            color: #e8eaed;
-            background: #303134;
-        }
-
-        .footer {
-            position: fixed;
-            bottom: 10px;
-            left: 0;
-            right: 0;
+        .loading {
             text-align: center;
+            padding: 40px;
+            color: #9aa0a6;
+            font-size: 15px;
+        }
+
+        .result {
+            display: block;
+            background: #303134;
+            border: 1px solid #5f6368;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 12px;
+            text-decoration: none;
+            color: inherit;
+            transition: 0.2s;
+            cursor: pointer;
+        }
+        body.light .result { background: #f8f9fa; border-color: #dadce0; }
+
+        .result:active {
+            background: #3c4043;
+            border-color: #4285f4;
+            transform: scale(0.98);
+        }
+        body.light .result:active { background: #e8eaed; }
+
+        .result h3 {
+            font-size: 16px;
+            color: #8ab4f8;
+            margin-bottom: 5px;
+        }
+        body.light .result h3 { color: #1a73e8; }
+
+        .result .url {
             font-size: 12px;
             color: #5f6368;
+            margin-bottom: 8px;
         }
+
+        .result p {
+            font-size: 13px;
+            color: #bdc1c6;
+            line-height: 1.5;
+        }
+        body.light .result p { color: #5f6368; }
+
+        .quick-links {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #5f6368;
+        }
+        body.light .quick-links { border-color: #dadce0; }
+
+        .quick-links a {
+            background: #303134;
+            color: #8ab4f8;
+            padding: 10px 16px;
+            border-radius: 18px;
+            text-decoration: none;
+            font-size: 13px;
+            border: 1px solid #5f6368;
+        }
+        body.light .quick-links a { background: #f8f9fa; color: #1a73e8; border-color: #dadce0; }
+        .quick-links a:active { background: #4285f4; color: white; }
     </style>
 </head>
 <body>
 
-    <div class="logo">Lbrowser Search</div>
-    <div class="subtitle">Поиск, который принадлежит тебе</div>
-
-    <div class="search-box">
-        <input type="text" id="query" placeholder="Введите запрос..." autofocus>
-        <button class="search-btn" onclick="search()">🔍</button>
+    <div class="header">
+        <div class="logo">Lbrowser Search</div>
+        <form class="search-form" onsubmit="doSearch(event)">
+            <input type="text" id="query" placeholder="Поиск в Википедии...">
+            <button type="submit">Найти</button>
+        </form>
+        <a href="index.html" class="back-btn">← Назад</a>
     </div>
 
-    <div class="buttons">
-        <button class="btn" onclick="search()">Найти</button>
-        <button class="btn" onclick="lucky()">Мне повезёт!</button>
-    </div>
-
-    <div class="links">
-        <a href="https://ru.wikipedia.org">📚 Википедия</a>
-        <a href="https://youtube.com">📺 YouTube</a>
-        <a href="https://github.com">💻 GitHub</a>
-    </div>
-
-    <div class="footer">
-        © 2026 Lbrowser Search — твой поисковик
-    </div>
+    <div class="results-info" id="resultsInfo"></div>
+    <div id="results"></div>
 
     <script>
-        function search() {
-            var q = document.getElementById('query').value.trim();
-            if (q === '') {
-                document.getElementById('query').focus();
-                return;
-            }
-            window.location.href = 'https://ru.wikipedia.org/wiki/' + encodeURIComponent(q);
-        }
-
-        function lucky() {
+        async function doSearch(event) {
+            if (event) event.preventDefault();
             var q = document.getElementById('query').value.trim();
             if (q === '') return;
-            window.location.href = 'https://ru.wikipedia.org/wiki/Special:Random';
+
+            document.getElementById('resultsInfo').textContent = 'Результаты по запросу: "' + q + '"';
+            document.getElementById('results').innerHTML = '<div class="loading">Поиск в Википедии...</div>';
+
+            var allResults = [];
+
+            try {
+                var searchUrl = 'https://ru.wikipedia.org/w/api.php?action=query&list=search&srsearch=' +
+                    encodeURIComponent(q) + '&format=json&origin=*&srlimit=10';
+                var searchResp = await fetch(searchUrl);
+                if (searchResp.ok) {
+                    var searchData = await searchResp.json();
+                    if (searchData.query && searchData.query.search) {
+                        searchData.query.search.forEach(function(item) {
+                            var cleanDesc = item.snippet.replace(/<[^>]*>/g, '');
+                            var pageUrl = 'https://ru.wikipedia.org/wiki/' + encodeURIComponent(item.title.replace(/ /g, '_'));
+                            allResults.push({
+                                title: item.title + ' — Википедия',
+                                url: pageUrl,
+                                desc: cleanDesc + '...'
+                            });
+                        });
+                    }
+                }
+            } catch (e) { console.log('Wikipedia error:', e); }
+
+            if (allResults.length === 0) {
+                document.getElementById('results').innerHTML = `
+                    <div class="loading">Ничего не найдено в Википедии</div>
+                    <div class="quick-links">
+                        <a href="https://www.google.com/search?q=${encodeURIComponent(q)}" target="_blank">🌐 Google</a>
+                        <a href="https://yandex.ru/search/?text=${encodeURIComponent(q)}" target="_blank">🔴 Яндекс</a>
+                        <a href="https://www.bing.com/search?q=${encodeURIComponent(q)}" target="_blank">🔵 Bing</a>
+                    </div>
+                `;
+                return;
+            }
+
+            var html = allResults.map(function(r) {
+                return `
+                    <a class="result" href="${r.url}" target="_blank" rel="noopener">
+                        <h3>${r.title}</h3>
+                        <div class="url">ru.wikipedia.org</div>
+                        <p>${r.desc}</p>
+                    </a>
+                `;
+            }).join('');
+
+            html += `
+                <div class="quick-links">
+                    <a href="https://www.google.com/search?q=${encodeURIComponent(q)}" target="_blank">🌐 Google</a>
+                    <a href="https://yandex.ru/search/?text=${encodeURIComponent(q)}" target="_blank">🔴 Яндекс</a>
+                    <a href="https://www.bing.com/search?q=${encodeURIComponent(q)}" target="_blank">🔵 Bing</a>
+                    <a href="https://duckduckgo.com/?q=${encodeURIComponent(q)}" target="_blank">🦆 DuckDuckGo</a>
+                </div>
+            `;
+
+            document.getElementById('results').innerHTML = html;
         }
 
-        document.getElementById('query').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') search();
+        window.addEventListener('load', function() {
+            var params = new URLSearchParams(window.location.search);
+            var q = params.get('q');
+            if (q) {
+                document.getElementById('query').value = q;
+                doSearch();
+            }
         });
     </script>
 </body>
