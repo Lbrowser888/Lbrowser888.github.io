@@ -18,6 +18,7 @@
             color: #e8eaed;
             padding: 20px;
             overflow-x: hidden;
+            transition: background 0.5s, color 0.5s;
         }
 
         body.light { background: #ffffff; color: #202124; }
@@ -143,6 +144,23 @@
         }
         body.light .btn { background: #f8f9fa; color: #202124; border-color: #dadce0; }
         .btn:active { border-color: #8ab4f8; color: #8ab4f8; transform: scale(0.97); }
+
+        .bookmark-btn {
+            margin-top: 5px;
+            color: #fbbc05;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 10px 20px;
+            border-radius: 20px;
+            transition: 0.3s;
+            background: transparent;
+            border: 1px solid #fbbc05;
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .bookmark-btn:active { background: #fbbc05; color: #202124; }
 
         .advanced-toggle {
             margin-top: 5px;
@@ -344,16 +362,19 @@
         }
         .reset-btn:active { background: #ea4335; color: white; }
 
-        .history-list {
+        .history-list,
+        .bookmarks-list {
             max-height: 500px;
             overflow-y: auto;
             border: 1px solid #5f6368;
             border-radius: 8px;
             padding: 8px;
         }
-        body.light .history-list { border-color: #dadce0; }
+        body.light .history-list,
+        body.light .bookmarks-list { border-color: #dadce0; }
 
-        .history-item {
+        .history-item,
+        .bookmark-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -362,9 +383,11 @@
             border-radius: 6px;
             margin-bottom: 4px;
         }
-        .history-item:active { background: #3c4043; }
+        .history-item:active,
+        .bookmark-item:active { background: #3c4043; }
 
-        .history-item a {
+        .history-item a,
+        .bookmark-item a {
             color: #8ab4f8;
             text-decoration: none;
             flex: 1;
@@ -374,7 +397,8 @@
             margin-right: 8px;
         }
 
-        .history-item button {
+        .history-item button,
+        .bookmark-item button {
             background: transparent;
             border: none;
             color: #ea4335;
@@ -421,6 +445,7 @@
         <div class="clock" id="clock"></div>
         <button class="top-btn" onclick="toggleSettings(event)">⚙️</button>
         <button class="top-btn" onclick="toggleHistory(event)">🔎</button>
+        <button class="top-btn" onclick="toggleBookmarks(event)">⭐</button>
     </div>
 
     <div class="panel" id="settingsPanel">
@@ -451,6 +476,14 @@
         </div>
 
         <div class="toggle-row">
+            <span>Авто-тема (по времени)</span>
+            <label class="switch">
+                <input type="checkbox" id="autoThemeToggle" checked onchange="toggleAutoTheme()">
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <div class="toggle-row">
             <span>Показывать часы</span>
             <label class="switch">
                 <input type="checkbox" id="clockToggle" checked onchange="toggleClock()">
@@ -472,6 +505,17 @@
         <button class="clear-btn" onclick="clearHistory()">Очистить историю</button>
     </div>
 
+    <div class="panel" id="bookmarksPanel">
+        <button class="close-panel" onclick="toggleBookmarks(event)">✕</button>
+        <h3>⭐ Закладки</h3>
+
+        <div class="bookmarks-list" id="bookmarksList">
+            <div class="empty-msg">Пусто</div>
+        </div>
+
+        <button class="clear-btn" onclick="clearBookmarks()">Очистить закладки</button>
+    </div>
+
     <div class="logo">Lbrowser</div>
     <div class="subtitle">Поиск, который принадлежит тебе</div>
 
@@ -484,6 +528,8 @@
         <button class="btn" onclick="search()">Найти</button>
         <button class="btn" onclick="lucky()">Мне повезёт!</button>
     </div>
+
+    <button class="bookmark-btn" onclick="addBookmark()">⭐ Добавить в закладки</button>
 
     <button class="advanced-toggle" onclick="toggleAdvanced()">⚡ Расширенный режим</button>
 
@@ -502,35 +548,70 @@
         </div>
     </div>
 
-    <div class="footer">© 2026 Lbrowser</div>
+    <div class="footer">© 2026 Lbrowser — v1.1</div>
 
     <script>
+        function applyAutoTheme() {
+            var autoTheme = localStorage.getItem('lbrowserAutoTheme');
+            if (autoTheme === 'false') return;
+
+            var hour = new Date().getHours();
+            var isDay = hour >= 7 && hour < 19;
+
+            if (isDay) {
+                document.body.classList.add('light');
+                document.getElementById('themeToggle').checked = true;
+            } else {
+                document.body.classList.remove('light');
+                document.getElementById('themeToggle').checked = false;
+            }
+        }
+
+        function toggleAutoTheme() {
+            var enabled = document.getElementById('autoThemeToggle').checked;
+            localStorage.setItem('lbrowserAutoTheme', enabled);
+            if (enabled) applyAutoTheme();
+        }
+
+        function closeAllPanels() {
+            document.getElementById('settingsPanel').classList.remove('open');
+            document.getElementById('historyPanel').classList.remove('open');
+            document.getElementById('bookmarksPanel').classList.remove('open');
+            document.getElementById('clock').classList.remove('hidden');
+        }
+
         function toggleSettings(event) {
             if (event) event.stopPropagation();
             var panel = document.getElementById('settingsPanel');
-            var other = document.getElementById('historyPanel');
-            var clock = document.getElementById('clock');
-            other.classList.remove('open');
-            panel.classList.toggle('open');
-            if (panel.classList.contains('open')) {
-                clock.classList.add('hidden');
-            } else {
-                clock.classList.remove('hidden');
+            var isOpen = panel.classList.contains('open');
+            closeAllPanels();
+            if (!isOpen) {
+                panel.classList.add('open');
+                document.getElementById('clock').classList.add('hidden');
             }
         }
 
         function toggleHistory(event) {
             if (event) event.stopPropagation();
             var panel = document.getElementById('historyPanel');
-            var other = document.getElementById('settingsPanel');
-            var clock = document.getElementById('clock');
-            other.classList.remove('open');
-            panel.classList.toggle('open');
-            loadHistory();
-            if (panel.classList.contains('open')) {
-                clock.classList.add('hidden');
-            } else {
-                clock.classList.remove('hidden');
+            var isOpen = panel.classList.contains('open');
+            closeAllPanels();
+            if (!isOpen) {
+                panel.classList.add('open');
+                document.getElementById('clock').classList.add('hidden');
+                loadHistory();
+            }
+        }
+
+        function toggleBookmarks(event) {
+            if (event) event.stopPropagation();
+            var panel = document.getElementById('bookmarksPanel');
+            var isOpen = panel.classList.contains('open');
+            closeAllPanels();
+            if (!isOpen) {
+                panel.classList.add('open');
+                document.getElementById('clock').classList.add('hidden');
+                loadBookmarks();
             }
         }
 
@@ -542,7 +623,6 @@
             var settings = {
                 engine: document.getElementById('searchEngine').value,
                 fontSize: document.getElementById('fontSize').value,
-                lightTheme: document.getElementById('themeToggle').checked,
                 showClock: document.getElementById('clockToggle').checked
             };
             localStorage.setItem('lbrowserSettings', JSON.stringify(settings));
@@ -556,15 +636,14 @@
                 document.getElementById('fontSize').value = s.fontSize || 16;
                 document.getElementById('fontSizeLabel').textContent = s.fontSize || 16;
                 document.getElementById('query').style.fontSize = (s.fontSize || 16) + 'px';
-                if (s.lightTheme) {
-                    document.body.classList.add('light');
-                    document.getElementById('themeToggle').checked = true;
-                }
                 if (s.showClock === false) {
                     document.getElementById('clock').style.display = 'none';
                     document.getElementById('clockToggle').checked = false;
                 }
             }
+            loadHistory();
+            loadBookmarks();
+            applyAutoTheme();
         }
 
         function changeFontSize(size) {
@@ -575,7 +654,8 @@
 
         function toggleTheme() {
             document.body.classList.toggle('light');
-            saveSettings();
+            document.getElementById('autoThemeToggle').checked = false;
+            localStorage.setItem('lbrowserAutoTheme', 'false');
         }
 
         function toggleClock() {
@@ -586,7 +666,7 @@
 
         function resetSettings() {
             if (confirm('Сбросить все настройки?')) {
-                localStorage.removeItem('lbrowserSettings');
+                localStorage.clear();
                 location.reload();
             }
         }
@@ -617,8 +697,7 @@
 
         function searchFromHistory(query) {
             document.getElementById('query').value = query;
-            document.getElementById('historyPanel').classList.remove('open');
-            document.getElementById('clock').classList.remove('hidden');
+            closeAllPanels();
             search();
         }
 
@@ -630,9 +709,57 @@
         }
 
         function clearHistory() {
-            if (confirm('Очистить всю историю поиска?')) {
+            if (confirm('Очистить всю историю?')) {
                 localStorage.removeItem('lbrowserHistory');
                 loadHistory();
+            }
+        }
+
+        function addBookmark() {
+            var q = document.getElementById('query').value.trim();
+            if (q === '') {
+                alert('Введите запрос или URL');
+                return;
+            }
+            var bookmarks = JSON.parse(localStorage.getItem('lbrowserBookmarks') || '[]');
+            if (bookmarks.some(b => b.query === q)) {
+                alert('Уже в закладках');
+                return;
+            }
+            bookmarks.unshift({ query: q, time: new Date().toLocaleString('ru-RU') });
+            if (bookmarks.length > 50) bookmarks = bookmarks.slice(0, 50);
+            localStorage.setItem('lbrowserBookmarks', JSON.stringify(bookmarks));
+            loadBookmarks();
+            alert('⭐ Добавлено в закладки: ' + q);
+        }
+
+        function loadBookmarks() {
+            var list = document.getElementById('bookmarksList');
+            if (!list) return;
+            var bookmarks = JSON.parse(localStorage.getItem('lbrowserBookmarks') || '[]');
+            if (bookmarks.length === 0) {
+                list.innerHTML = '<div class="empty-msg">Пусто</div>';
+                return;
+            }
+            list.innerHTML = bookmarks.map((b, i) => `
+                <div class="bookmark-item">
+                    <a href="#" onclick="searchFromHistory('${b.query.replace(/'/g, "\\'")}'); return false;">⭐ ${b.query}</a>
+                    <button onclick="removeBookmark(${i})">✕</button>
+                </div>
+            `).join('');
+        }
+
+        function removeBookmark(index) {
+            var bookmarks = JSON.parse(localStorage.getItem('lbrowserBookmarks') || '[]');
+            bookmarks.splice(index, 1);
+            localStorage.setItem('lbrowserBookmarks', JSON.stringify(bookmarks));
+            loadBookmarks();
+        }
+
+        function clearBookmarks() {
+            if (confirm('Очистить все закладки?')) {
+                localStorage.removeItem('lbrowserBookmarks');
+                loadBookmarks();
             }
         }
 
@@ -687,21 +814,22 @@
         updateClock();
 
         document.addEventListener('click', function(e) {
-            var settings = document.getElementById('settingsPanel');
-            var history = document.getElementById('historyPanel');
             var topBar = document.querySelector('.top-bar');
-            var clock = document.getElementById('clock');
             if (!topBar.contains(e.target)) {
-                if (settings.classList.contains('open') && !settings.contains(e.target)) {
-                    settings.classList.remove('open');
-                    clock.classList.remove('hidden');
-                }
-                if (history.classList.contains('open') && !history.contains(e.target)) {
-                    history.classList.remove('open');
-                    clock.classList.remove('hidden');
-                }
+                var panels = document.querySelectorAll('.panel');
+                panels.forEach(function(panel) {
+                    if (panel.classList.contains('open') && !panel.contains(e.target)) {
+                        panel.classList.remove('open');
+                        document.getElementById('clock').classList.remove('hidden');
+                    }
+                });
             }
         });
+
+        setInterval(function() {
+            var autoTheme = localStorage.getItem('lbrowserAutoTheme');
+            if (autoTheme !== 'false') applyAutoTheme();
+        }, 5 * 60 * 1000);
 
         loadSettings();
     </script>
