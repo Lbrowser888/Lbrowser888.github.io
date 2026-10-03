@@ -145,23 +145,6 @@
         body.light .btn { background: #f8f9fa; color: #202124; border-color: #dadce0; }
         .btn:active { border-color: #8ab4f8; color: #8ab4f8; transform: scale(0.97); }
 
-        .bookmark-btn {
-            margin-top: 5px;
-            color: #fbbc05;
-            cursor: pointer;
-            font-size: 14px;
-            padding: 10px 20px;
-            border-radius: 20px;
-            transition: 0.3s;
-            background: transparent;
-            border: 1px solid #fbbc05;
-            width: 100%;
-            max-width: 500px;
-            text-align: center;
-            margin-bottom: 10px;
-        }
-        .bookmark-btn:active { background: #fbbc05; color: #202124; }
-
         .advanced-toggle {
             margin-top: 5px;
             color: #8ab4f8;
@@ -244,23 +227,22 @@
         }
         .advanced-row button:active { background: #1a73e8; transform: scale(0.97); }
 
+        /* === ПАНЕЛИ (БЕЗ ТЁМНОЙ ПОЛОСЫ) === */
         .panel {
             position: fixed;
             top: 0;
             right: 0;
             background: #303134;
-            border-left: 1px solid #5f6368;
             padding: 20px;
             width: 100%;
             max-width: 340px;
             height: 100vh;
-            box-shadow: -8px 0 24px rgba(0,0,0,0.5);
             transform: translateX(100%);
             transition: transform 0.3s;
             z-index: 200;
             overflow-y: auto;
         }
-        body.light .panel { background: #ffffff; border-color: #dadce0; }
+        body.light .panel { background: #ffffff; }
         .panel.open { transform: translateX(0); }
 
         .panel h3 {
@@ -270,18 +252,6 @@
             border-bottom: 1px solid #5f6368;
         }
         body.light .panel h3 { border-color: #dadce0; }
-
-        .close-panel {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: transparent;
-            border: none;
-            color: #9aa0a6;
-            font-size: 24px;
-            cursor: pointer;
-            padding: 5px;
-        }
 
         .setting-item { margin-bottom: 18px; }
         .setting-item > label {
@@ -362,19 +332,13 @@
         }
         .reset-btn:active { background: #ea4335; color: white; }
 
-        .history-list,
-        .bookmarks-list {
+        .history-list {
             max-height: 500px;
             overflow-y: auto;
-            border: 1px solid #5f6368;
-            border-radius: 8px;
             padding: 8px;
         }
-        body.light .history-list,
-        body.light .bookmarks-list { border-color: #dadce0; }
 
-        .history-item,
-        .bookmark-item {
+        .history-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -383,11 +347,9 @@
             border-radius: 6px;
             margin-bottom: 4px;
         }
-        .history-item:active,
-        .bookmark-item:active { background: #3c4043; }
+        .history-item:active { background: #3c4043; }
 
-        .history-item a,
-        .bookmark-item a {
+        .history-item a {
             color: #8ab4f8;
             text-decoration: none;
             flex: 1;
@@ -397,8 +359,7 @@
             margin-right: 8px;
         }
 
-        .history-item button,
-        .bookmark-item button {
+        .history-item button {
             background: transparent;
             border: none;
             color: #ea4335;
@@ -445,11 +406,9 @@
         <div class="clock" id="clock"></div>
         <button class="top-btn" onclick="toggleSettings(event)">⚙️</button>
         <button class="top-btn" onclick="toggleHistory(event)">🔎</button>
-        <button class="top-btn" onclick="toggleBookmarks(event)">⭐</button>
     </div>
 
     <div class="panel" id="settingsPanel">
-        <button class="close-panel" onclick="toggleSettings(event)">✕</button>
         <h3>⚙️ Настройки</h3>
 
         <div class="setting-item">
@@ -495,7 +454,6 @@
     </div>
 
     <div class="panel" id="historyPanel">
-        <button class="close-panel" onclick="toggleHistory(event)">✕</button>
         <h3>🔎 История поиска</h3>
 
         <div class="history-list" id="historyList">
@@ -503,17 +461,6 @@
         </div>
 
         <button class="clear-btn" onclick="clearHistory()">Очистить историю</button>
-    </div>
-
-    <div class="panel" id="bookmarksPanel">
-        <button class="close-panel" onclick="toggleBookmarks(event)">✕</button>
-        <h3>⭐ Закладки</h3>
-
-        <div class="bookmarks-list" id="bookmarksList">
-            <div class="empty-msg">Пусто</div>
-        </div>
-
-        <button class="clear-btn" onclick="clearBookmarks()">Очистить закладки</button>
     </div>
 
     <div class="logo">Lbrowser</div>
@@ -528,8 +475,6 @@
         <button class="btn" onclick="search()">Найти</button>
         <button class="btn" onclick="lucky()">Мне повезёт!</button>
     </div>
-
-    <button class="bookmark-btn" onclick="addBookmark()">⭐ Добавить в закладки</button>
 
     <button class="advanced-toggle" onclick="toggleAdvanced()">⚡ Расширенный режим</button>
 
@@ -576,7 +521,6 @@
         function closeAllPanels() {
             document.getElementById('settingsPanel').classList.remove('open');
             document.getElementById('historyPanel').classList.remove('open');
-            document.getElementById('bookmarksPanel').classList.remove('open');
             document.getElementById('clock').classList.remove('hidden');
         }
 
@@ -600,18 +544,6 @@
                 panel.classList.add('open');
                 document.getElementById('clock').classList.add('hidden');
                 loadHistory();
-            }
-        }
-
-        function toggleBookmarks(event) {
-            if (event) event.stopPropagation();
-            var panel = document.getElementById('bookmarksPanel');
-            var isOpen = panel.classList.contains('open');
-            closeAllPanels();
-            if (!isOpen) {
-                panel.classList.add('open');
-                document.getElementById('clock').classList.add('hidden');
-                loadBookmarks();
             }
         }
 
@@ -642,7 +574,6 @@
                 }
             }
             loadHistory();
-            loadBookmarks();
             applyAutoTheme();
         }
 
@@ -712,54 +643,6 @@
             if (confirm('Очистить всю историю?')) {
                 localStorage.removeItem('lbrowserHistory');
                 loadHistory();
-            }
-        }
-
-        function addBookmark() {
-            var q = document.getElementById('query').value.trim();
-            if (q === '') {
-                alert('Введите запрос или URL');
-                return;
-            }
-            var bookmarks = JSON.parse(localStorage.getItem('lbrowserBookmarks') || '[]');
-            if (bookmarks.some(b => b.query === q)) {
-                alert('Уже в закладках');
-                return;
-            }
-            bookmarks.unshift({ query: q, time: new Date().toLocaleString('ru-RU') });
-            if (bookmarks.length > 50) bookmarks = bookmarks.slice(0, 50);
-            localStorage.setItem('lbrowserBookmarks', JSON.stringify(bookmarks));
-            loadBookmarks();
-            alert('⭐ Добавлено в закладки: ' + q);
-        }
-
-        function loadBookmarks() {
-            var list = document.getElementById('bookmarksList');
-            if (!list) return;
-            var bookmarks = JSON.parse(localStorage.getItem('lbrowserBookmarks') || '[]');
-            if (bookmarks.length === 0) {
-                list.innerHTML = '<div class="empty-msg">Пусто</div>';
-                return;
-            }
-            list.innerHTML = bookmarks.map((b, i) => `
-                <div class="bookmark-item">
-                    <a href="#" onclick="searchFromHistory('${b.query.replace(/'/g, "\\'")}'); return false;">⭐ ${b.query}</a>
-                    <button onclick="removeBookmark(${i})">✕</button>
-                </div>
-            `).join('');
-        }
-
-        function removeBookmark(index) {
-            var bookmarks = JSON.parse(localStorage.getItem('lbrowserBookmarks') || '[]');
-            bookmarks.splice(index, 1);
-            localStorage.setItem('lbrowserBookmarks', JSON.stringify(bookmarks));
-            loadBookmarks();
-        }
-
-        function clearBookmarks() {
-            if (confirm('Очистить все закладки?')) {
-                localStorage.removeItem('lbrowserBookmarks');
-                loadBookmarks();
             }
         }
 
